@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { get_tomatoes, create_tomato } from '@/apis/tomato.js'
+import { get_tomatoes, create_tomato, delete_tomato } from '@/apis/tomato.js'
 
 const topic = ref('')
 const timeinfo = ref('')
@@ -54,6 +54,33 @@ const searchTomato = () => {
   }).catch(err => {
     console.log(err);
   })
+}
+
+const confirmDelete = (id) => {
+  ElMessageBox.confirm(
+    'Are you sure you want to delete this tomato?',
+    'Delete tomato!',
+    {
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+      type: 'warning',
+    }
+  ).then(() => {
+    delete_tomato({"tomato_id": id}).then(res => {
+      if (res.data.ok) {
+        searchTomato();
+        ElMessage({
+          type: 'success',
+          message: 'Deleted successfully',
+        });
+      } else {
+        console.log(res);
+      }
+    });    
+  }).catch(e => {
+    console.log(e);
+    console.log('Canceled');
+  });
 }
 
 searchTomato();
@@ -119,7 +146,7 @@ searchTomato();
         <el-table-column label="Actions" width="150" align="center">
           <template #default="scope">
             <el-button size="small" type="primary" plain>Edit</el-button>
-            <el-button size="small" type="danger" plain>Delete</el-button>
+            <el-button size="small" type="danger" plain @click="confirmDelete(scope.row.id)">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>

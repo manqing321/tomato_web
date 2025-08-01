@@ -14,4 +14,12 @@ function create_tomato(data) {
     })
 }
 
-export { get_tomatoes, create_tomato }
+function delete_tomato(data) {
+    return http_instance({
+        url: "delete_tomato/",
+        method: "delete",
+        params: data,
+    })
+}
+
+export { get_tomatoes, create_tomato, delete_tomato }
