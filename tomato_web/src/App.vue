@@ -83,6 +83,19 @@ const confirmDelete = (id) => {
   });
 }
 
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+const paginatedTomatoList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return tomato_list.value.slice(start, end)
+})
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+}
+
 searchTomato();
 </script>
 
@@ -122,7 +135,7 @@ searchTomato();
     <div class="list-section">
       <h3>Pomodoro History</h3>
       <el-table 
-        :data="tomato_list" 
+        :data="paginatedTomatoList" 
         border 
         style="width: 100%;"
         stripe
@@ -130,12 +143,12 @@ searchTomato();
       >
         <el-table-column prop="id" label="ID" width="60" />
         <el-table-column prop="name" label="Task Topic" />
-        <el-table-column prop="starttime" label="Start Time" width="160">
+        <el-table-column prop="starttime" label="Start Time" width="200">
           <template #default="scope">
             {{ formatTableTime(scope.row.starttime) }}
           </template>
         </el-table-column>
-        <el-table-column prop="stoptime" label="End Time" width="160">
+        <el-table-column prop="stoptime" label="End Time" width="200">
           <template #default="scope">
             {{ formatTableTime(scope.row.stoptime) }}
           </template>
@@ -143,7 +156,7 @@ searchTomato();
         <el-table-column prop="minutes" label="Minutes" width="80" />
         <el-table-column prop="user" label="User" width="100" />
 
-        <el-table-column label="Actions" width="150" align="center">
+        <el-table-column label="Actions" width="200" align="center">
           <template #default="scope">
             <el-button size="small" type="primary" plain>Edit</el-button>
             <el-button size="small" type="danger" plain @click="confirmDelete(scope.row.id)">Delete</el-button>
@@ -153,8 +166,10 @@ searchTomato();
       
       <div class="pagination-container">
         <el-pagination 
-          :page-size="5" 
-          :total="10" 
+          :current-page="currentPage"
+          :page-size="pageSize" 
+          :total="tomato_list.length" 
+          @current-change="handlePageChange"
           layout="prev, pager, next, jumper, total" 
           background 
         />
