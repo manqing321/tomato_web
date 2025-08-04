@@ -102,11 +102,11 @@ searchTomato();
 <template>
   <div class="container">
     <div class="header">
-      <h2>🍅 Pomodoro Timer</h2>
+      <h2>🍅 Tomato Timer</h2>
     </div>
 
     <div class="add-section">
-      <h3>Add New Pomodoro</h3>
+      <h3>Add New Tomato</h3>
       <div class="input-group">
         <el-input 
           v-model="topic" 
@@ -120,7 +120,7 @@ searchTomato();
           round
           :disabled="!topic"
         >
-          Start Pomodoro
+          Start Tomato
         </el-button>
       </div>
     </div>
@@ -133,7 +133,7 @@ searchTomato();
     </div>
 
     <div class="list-section">
-      <h3>Pomodoro History</h3>
+      <h3>Tomato History</h3>
       <el-table 
         :data="paginatedTomatoList" 
         border 
