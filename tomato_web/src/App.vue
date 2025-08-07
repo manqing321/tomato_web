@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { get_tomatoes, create_tomato, delete_tomato } from '@/apis/tomato.js'
+import { get_tomatoes, create_tomato, delete_tomato, update_tomato } from '@/apis/tomato.js'
 
 const topic = ref('')
 const timeinfo = ref('')
@@ -13,11 +13,7 @@ const formatTableTime = (timeString) => {
   return timeString.replace('T', ' ').substring(0, 16)
 }
 
-const addTomato = () => {
-  const now = new Date()
-  const endTime = new Date(now.getTime() + 30 * 60 * 1000)
-
-  const formatTime = (date) => {
+const formatTime = (date) => {
     return date.toLocaleString('zh-CN', {
       year: 'numeric',
       month: '2-digit',
@@ -26,7 +22,10 @@ const addTomato = () => {
       minute: '2-digit'
     }).replace(/\//g, '-')
   }
-  
+
+const addTomato = () => {
+  const now = new Date()
+  const endTime = new Date(now.getTime() + 30 * 60 * 1000)
   let toamto_name = topic.value
   let starttime = formatTime(now)
   let stoptime = formatTime(endTime)
@@ -47,6 +46,58 @@ const addTomato = () => {
     console.log(err)
   })
 }
+ 
+  const dialog = ref(false)
+ 
+  const edit_form_data = reactive({
+    tomato: {},
+    topic: "",
+    start_time: ""
+  })
+  const submitEdit = () => {
+    const starttime = new Date()
+    console.log(edit_form_data.start_time)
+    
+    if (edit_form_data.start_time) {
+      const [hours, minutes] = edit_form_data.start_time.split(':').map(Number);
+      starttime.setHours(hours);
+      starttime.setMinutes(minutes);
+      starttime.setSeconds(0);
+    }
+    const stoptime = new Date(starttime.getTime() + 30 * 60 * 1000)
+    console.log(starttime, stoptime);
+    let minutes = 30
+    let user = "yajun"
+    update_tomato(edit_form_data.tomato.id, 
+    {
+      "name": edit_form_data.topic,
+      "starttime": formatTime(starttime),
+      "stoptime": formatTime(stoptime),
+      minutes,
+      user
+    }
+  ).then(res => {
+      console.log(res);
+      searchTomato();
+    }).catch(err => {
+      console.log(err)
+    })
+    
+    dialog.value = false
+  }
+  const resetEdit = () => {
+    edit_form_data.topic = edit_form_data.tomato.name
+    const timePart = edit_form_data.tomato.starttime.split('T')[1]
+    edit_form_data.start_time = timePart
+  }
+
+  const startEdit = (tomato) => {
+    edit_form_data.tomato = tomato
+    edit_form_data.topic = tomato.name    
+    const timePart = tomato.starttime.split('T')[1]
+    edit_form_data.start_time = timePart
+    dialog.value = true
+  }
 
 const searchTomato = () => {
   get_tomatoes().then(res => {
@@ -100,6 +151,66 @@ searchTomato();
 </script>
 
 <template>
+  <el-dialog 
+    title="Edit Tomato" 
+    v-model="dialog" 
+    draggable 
+    width="550px"
+    class="edit-tomato-dialog"
+    :close-on-click-modal="false"
+  >
+    <div class="dialog-content">
+      <el-form 
+        :model="edit_form_data" 
+        label-width="120px" 
+        class="edit-form"
+      >
+        
+        <el-form-item label="ID">
+          <el-text>{{ edit_form_data.tomato.id }}</el-text>
+        </el-form-item>
+
+        <el-form-item label="Task Topic">
+          <el-input 
+            v-model="edit_form_data.topic" 
+            placeholder="Enter task topic"
+            clearable
+          />
+        </el-form-item>
+        
+        <el-form-item label="Start Time">
+          <el-time-picker 
+            v-model="edit_form_data.start_time"
+            value-format="HH:mm" 
+            format="HH:mm" 
+            placeholder="Select start time"
+            class="time-picker"
+          />
+        </el-form-item>
+      </el-form>
+    </div>
+    
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="resetEdit">
+          Reset
+        </el-button>
+        <div class="action-buttons">
+          <el-button @click="dialog = false">
+            Cancel
+          </el-button>
+          <el-button 
+            type="primary" 
+            @click="submitEdit"
+          >
+            Confirm
+          </el-button>
+        </div>
+      </div>
+    </template>
+  </el-dialog>
+  <hr>
+
   <div class="container">
     <div class="header">
       <h2>🍅 Tomato Timer</h2>
@@ -158,7 +269,7 @@ searchTomato();
 
         <el-table-column label="Actions" width="200" align="center">
           <template #default="scope">
-            <el-button size="small" type="primary" plain>Edit</el-button>
+            <el-button size="small" type="primary" plain @click="startEdit(scope.row)">Edit</el-button>
             <el-button size="small" type="danger" plain @click="confirmDelete(scope.row.id)">Delete</el-button>
           </template>
         </el-table-column>
@@ -295,6 +406,79 @@ searchTomato();
   
   .el-table :deep(.el-table__cell) {
     padding: 8px 0;
+  }
+}
+
+/* 编辑弹窗样式 */
+.edit-tomato-dialog {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.edit-tomato-dialog :deep(.el-dialog__header) {
+  background-color: #f5f7fa;
+  padding: 15px 20px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.edit-tomato-dialog :deep(.el-dialog__title) {
+  font-weight: 600;
+  color: #303133;
+}
+
+.edit-tomato-dialog :deep(.el-dialog__body) {
+  padding: 25px 30px;
+}
+
+.edit-tomato-dialog :deep(.el-dialog__footer) {
+  padding: 15px 30px 20px;
+  background-color: #f5f7fa;
+  border-top: 1px solid #ebeef5;
+}
+
+.dialog-content {
+  padding: 10px 0;
+}
+
+.edit-form :deep(.el-form-item) {
+  margin-bottom: 22px;
+}
+
+.edit-form :deep(.el-form-item__label) {
+  font-weight: 500;
+  color: #606266;
+}
+
+.time-picker {
+  width: 100%;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .edit-tomato-dialog :deep(.el-dialog) {
+    width: 90% !important;
+    margin: 0 auto !important;
+  }
+  
+  .dialog-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .action-buttons {
+    width: 100%;
   }
 }
 </style>

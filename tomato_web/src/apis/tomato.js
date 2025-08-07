@@ -22,4 +22,12 @@ function delete_tomato(data) {
     })
 }
 
-export { get_tomatoes, create_tomato, delete_tomato }
+function update_tomato(tomato_id, data) {
+    return http_instance({
+        url: `update_tomato/${tomato_id}`,
+        method: "patch",
+        data: data,
+    })
+}
+
+export { get_tomatoes, create_tomato, delete_tomato, update_tomato }
