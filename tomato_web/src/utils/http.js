@@ -3,7 +3,7 @@ import axios from "axios";
 // 1 创建 axios 实例
 const http_instance = axios.create({
     // 接口基础地址
-    baseURL: "http://47.108.194.157:80/api/",
+    baseURL: "https://tomato-clock.cn/api/",
     // 超时时间
     timeout: 5000, 
 })
