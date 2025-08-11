@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { get_tomatoes, create_tomato, delete_tomato, update_tomato } from '@/apis/tomato.js'
+import TomatoIcon from '@/assets/Tomato.svg'
 
 const topic = ref('')
 const timeinfo = ref('')
@@ -31,7 +32,7 @@ const addTomato = () => {
   let stoptime = formatTime(endTime)
   let minutes = 30
   let user = "yajun"
-  timeinfo.value = `【${topic.value}】 from ${starttime} to ${stoptime}` + '\n' + timeinfo.value
+  timeinfo.value = `【${topic.value}】 from ${starttime} to ${stoptime}`
 
   create_tomato({
     "name": toamto_name,
@@ -209,11 +210,13 @@ searchTomato();
       </div>
     </template>
   </el-dialog>
-  <hr>
-
+  
   <div class="container">
     <div class="header">
-      <h2>🍅 Tomato Timer</h2>
+      <h2>
+        <img :src="TomatoIcon" class="tomato-icon" alt="Tomato" />
+        Tomato-Clock
+      </h2>
     </div>
 
     <div class="add-section">
@@ -259,7 +262,7 @@ searchTomato();
             {{ formatTableTime(scope.row.starttime) }}
           </template>
         </el-table-column>
-        <el-table-column prop="stoptime" label="End Time" width="200">
+        <el-table-column prop="stoptime" label="Stop Time" width="200">
           <template #default="scope">
             {{ formatTableTime(scope.row.stoptime) }}
           </template>
@@ -308,6 +311,16 @@ searchTomato();
   color: #67c23a;
   font-size: 28px;
   margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.tomato-icon {
+  width: 32px;
+  height: 32px;
+  vertical-align: middle;
 }
 
 .add-section {
