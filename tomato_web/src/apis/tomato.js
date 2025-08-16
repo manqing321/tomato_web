@@ -2,13 +2,13 @@ import http_instance from "@/utils/http"
 
 function get_tomatoes() {
     return http_instance({
-        url: "read_tomatoes/",
+        url: "tomato/read_tomatoes/",
     })
 }
 
 function create_tomato(data) {
     return http_instance({
-        url: "create_tomato/",
+        url: "tomato/create_tomato/",
         method: "post",
         data: data,
     })
@@ -16,7 +16,7 @@ function create_tomato(data) {
 
 function delete_tomato(data) {
     return http_instance({
-        url: "delete_tomato/",
+        url: "tomato/delete_tomato/",
         method: "delete",
         params: data,
     })
@@ -24,7 +24,7 @@ function delete_tomato(data) {
 
 function update_tomato(tomato_id, data) {
     return http_instance({
-        url: `update_tomato/${tomato_id}`,
+        url: `tomato/update_tomato/${tomato_id}`,
         method: "patch",
         data: data,
     })
