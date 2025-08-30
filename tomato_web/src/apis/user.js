@@ -7,8 +7,7 @@ const login = (data) => {
     return http_instance({
         method: 'post',
         url: 'user/token/',
-        data: formData,
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded'  },
+        data: formData
     })};
 
     
@@ -19,8 +18,7 @@ const register = (data) => {
     return http_instance({
         method: 'post',
         url: 'user/create_user/',
-        data: formData,
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded'  },
+        data: formData
     })};
 
 export { register, login };

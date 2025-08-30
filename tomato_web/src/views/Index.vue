@@ -99,7 +99,7 @@ const addTomato = () => {
 
 const searchTomato = () => {
   get_tomatoes().then(res => {
-    tomato_list.value = res.data.reverse()
+    tomato_list.value = res.data
   }).catch(err => {
     console.log(err);
   })
