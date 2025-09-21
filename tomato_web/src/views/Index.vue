@@ -6,7 +6,7 @@ import TomatoIcon from '@/assets/Tomato.svg'
 const topic = ref('')
 const timeinfo = ref('')
 const tomato_list = ref([])
-
+const current_tomato_id = ref(0)
 
 const formatTableTime = (timeString) => {
   if (!timeString) return ''
@@ -40,7 +40,8 @@ const addTomato = () => {
     minutes,
     user
   }).then(res => {
-    console.log(res);
+    // console.log(res);
+    current_tomato_id.value = res.data.id;
     searchTomato();
   }).catch(err => {
     console.log(err)
@@ -75,7 +76,12 @@ const addTomato = () => {
       user
     }
   ).then(res => {
-      console.log(res);
+      // console.log(res);
+      let starttimeStr = formatTime(starttime)
+      let stoptimeStr = formatTime(stoptime)
+      if (res.data.id === current_tomato_id.value) {
+        timeinfo.value = `【${edit_form_data.topic}】 from ${starttimeStr} to ${stoptimeStr}`
+      }
       searchTomato();
     }).catch(err => {
       console.log(err)
@@ -117,6 +123,9 @@ const confirmDelete = (id) => {
   ).then(() => {
     delete_tomato({"tomato_id": id}).then(res => {
       if (res.data.ok) {
+        if (id == current_tomato_id.value) {
+          timeinfo.value = ``
+        }
         searchTomato();
         ElMessage({
           type: 'success',
