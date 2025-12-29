@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { register, login } from '@/apis/user'
 import router from '@/routers/route'
 import TomatoIcon from '@/assets/Tomato.svg'
+import Record from '@/components/Record.vue'
 
 const username = ref('')
 const password = ref('')
@@ -119,17 +120,19 @@ const handleSubmit = async () => {
         {{ message }}
       </p>
     </div>
+    <Record />
   </div>
 </template>
 
 <style scoped>
 .auth-container {
   display: flex;
+  flex-direction: column;
   justify-content: center;
-  align-items: center;
   min-height: 100vh;
   background-color: #f5f7fa;
   padding: 20px;
+  position: relative;
 }
 
 .auth-card {
@@ -139,6 +142,17 @@ const handleSubmit = async () => {
   padding: 30px;
   width: 100%;
   max-width: 450px;
+  margin: 0 auto 20px;
+}
+
+.auth-container > .footer {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 1200px;
+  margin: 0;
 }
 
 .header {
