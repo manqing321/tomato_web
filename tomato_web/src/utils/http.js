@@ -4,7 +4,7 @@ import router from "@/routers/route";
 // 1 创建 axios 实例
 const http_instance = axios.create({
     // 接口基础地址
-    baseURL: "https://tomato-clock.cn/api/",
+    baseURL: "/api",
     // 超时时间
     timeout: 5000, 
 })
@@ -26,6 +26,12 @@ http_instance.interceptors.request.use(
 
 http_instance.interceptors.response.use(
   (response) => {
+    // 检查响应是否为HTML（调试目的）
+    const contentType = response.headers['content-type'];
+    if (contentType && contentType.includes('text/html')) {
+      console.warn('Received HTML response for API call:', response.config.url);
+      console.warn('Response data:', response.data);
+    }
     return response;
   },
   (error) => {
