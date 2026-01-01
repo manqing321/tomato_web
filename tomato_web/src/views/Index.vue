@@ -1,7 +1,25 @@
 <script setup>
-import { ref } from 'vue'
-import { get_tomatoes, create_tomato, delete_tomato, update_tomato } from '@/apis/tomato.js'
+import { ref, computed, watch, nextTick, reactive, onMounted } from 'vue'
+import { get_tomatoes, create_tomato, delete_tomato, update_tomato, stat_day, stat_month, stat_name } from '@/apis/tomato.js'
+import * as echarts from 'echarts'
 import TomatoIcon from '@/assets/Tomato.svg'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+// 统计相关的响应式变量
+const activeStatisticsTab = ref('day')
+const dayResult = ref('')
+const monthResult = ref('')
+const nameResult = ref('')
+const dayChart = ref(null)
+const monthChart = ref(null)
+const nameChart = ref(null)
+
+// 天统计数据
+const dayData = ref({})
+// 月统计数据
+const monthData = ref({})
+// 总计统计数据
+const nameData = ref({})
 
 const topic = ref('')
 const timeinfo = ref('')
@@ -142,6 +160,7 @@ const confirmDelete = (id) => {
 
 const currentPage = ref(1)
 const pageSize = ref(10)
+const activeTab = ref('history')
 
 const paginatedTomatoList = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
@@ -155,6 +174,302 @@ const handlePageChange = (page) => {
 
 
 searchTomato()
+
+// 初始化图表
+const initCharts = () => {
+  if (dayChart.value) {
+    dayChart.value = echarts.init(dayChart.value)
+  }
+  if (monthChart.value) {
+    monthChart.value = echarts.init(monthChart.value)
+  }
+  if (nameChart.value) {
+    nameChart.value = echarts.init(nameChart.value)
+  }
+}
+
+// 更新天统计图表
+const updateDayChart = () => {
+  if (!dayChart.value || !dayData.value) return
+  
+  const chart = echarts.getInstanceByDom(dayChart.value)
+  if (!chart) return
+  
+  const dates = Object.keys(dayData.value)
+  const values = Object.values(dayData.value)
+  
+  const option = {
+    title: {
+      text: 'Daily Tomato Statistics',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLabel: {
+        rotate: 45
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: 'Tomato Count'
+    },
+    series: [{
+      name: 'Tomato Count',
+      type: 'bar',
+      data: values,
+      itemStyle: {
+        color: '#67c23a'
+      }
+    }]
+  }
+  
+  chart.setOption(option)
+}
+
+// 更新月统计图表
+const updateMonthChart = () => {
+  if (!monthChart.value || !monthData.value) return
+  
+  const chart = echarts.getInstanceByDom(monthChart.value)
+  if (!chart) return
+  
+  const months = Object.keys(monthData.value)
+  const values = Object.values(monthData.value)
+  
+  const option = {
+    title: {
+      text: 'Monthly Tomato Statistics',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    xAxis: {
+      type: 'category',
+      data: months,
+      axisLabel: {
+        rotate: 45
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: 'Tomato Count'
+    },
+    series: [{
+      name: 'Tomato Count',
+      type: 'bar',
+      data: values,
+      itemStyle: {
+        color: '#409eff'
+      }
+    }]
+  }
+  
+  chart.setOption(option)
+}
+
+// 更新总计统计图表
+const updateNameChart = () => {
+  if (!nameChart.value || !nameData.value) return
+  
+  const chart = echarts.getInstanceByDom(nameChart.value)
+  if (!chart) return
+  
+  const names = Object.keys(nameData.value)
+  const values = Object.values(nameData.value)
+  
+  const option = {
+    title: {
+      text: 'Task Type Statistics',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    xAxis: {
+      type: 'category',
+      data: names,
+      axisLabel: {
+        rotate: 45
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: 'Tomato Count'
+    },
+    series: [{
+      name: 'Tomato Count',
+      type: 'bar',
+      data: values,
+      itemStyle: {
+        color: '#e6a23c'
+      }
+    }]
+  }
+  
+  chart.setOption(option)
+}
+
+// 获取所有统计数据
+const fetchAllStatistics = async () => {
+  try {
+    // 获取天统计
+    const dayResponse = await stat_day()
+    dayData.value = dayResponse.data
+    dayResult.value = JSON.stringify(dayResponse.data, null, 2)
+    
+    // 获取月统计
+    const monthResponse = await stat_month()
+    monthData.value = monthResponse.data
+    monthResult.value = JSON.stringify(monthResponse.data, null, 2)
+    
+    // 获取总计统计
+    const nameResponse = await stat_name()
+    nameData.value = nameResponse.data
+    nameResult.value = JSON.stringify(nameResponse.data, null, 2)
+    
+    // 更新图表
+    setTimeout(() => {
+      updateDayChart()
+      updateMonthChart()
+      updateNameChart()
+      
+      // 主动触发图表重新渲染，确保尺寸正确
+      triggerChartsResize()
+    }, 100)
+    
+  } catch (error) {
+    console.error('获取统计数据失败:', error)
+  }
+}
+
+// 主动触发图表重新渲染的方法
+const triggerChartsResize = () => {
+  nextTick(() => {
+    if (dayChart.value) {
+      const chart = echarts.getInstanceByDom(dayChart.value)
+      if (chart) {
+        chart.resize()
+      }
+    }
+    if (monthChart.value) {
+      const chart = echarts.getInstanceByDom(monthChart.value)
+      if (chart) {
+        chart.resize()
+      }
+    }
+    if (nameChart.value) {
+      const chart = echarts.getInstanceByDom(nameChart.value)
+      if (chart) {
+        chart.resize()
+      }
+    }
+  })
+}
+
+
+// 组件挂载时初始化
+onMounted(() => {
+  initCharts()
+  fetchAllStatistics()
+})
+
+// 窗口大小改变时重新渲染图表
+window.addEventListener('resize', () => {
+  if (dayChart.value) {
+    const chart = echarts.getInstanceByDom(dayChart.value)
+    if (chart) chart.resize()
+  }
+  if (monthChart.value) {
+    const chart = echarts.getInstanceByDom(monthChart.value)
+    if (chart) chart.resize()
+  }
+  if (nameChart.value) {
+    const chart = echarts.getInstanceByDom(nameChart.value)
+    if (chart) chart.resize()
+  }
+})
+
+// 在组件载入时就获取所有统计信息
+const fetchStatisticsOnLoad = async () => {
+  try {
+    // 直接调用统计接口
+    const [dayResponse, monthResponse, nameResponse] = await Promise.all([
+      stat_day(),
+      stat_month(),
+      stat_name()
+    ])
+    
+    // 更新数据
+    dayData.value = dayResponse.data
+    monthData.value = monthResponse.data
+    nameData.value = nameResponse.data
+    dayResult.value = JSON.stringify(dayResponse.data, null, 2)
+    monthResult.value = JSON.stringify(monthResponse.data, null, 2)
+    nameResult.value = JSON.stringify(nameResponse.data, null, 2)
+    
+    // 更新图表
+    nextTick(() => {
+      updateDayChart()
+      updateMonthChart()
+      updateNameChart()
+      triggerChartsResize()
+    })
+  } catch (error) {
+    console.error('获取统计数据失败:', error)
+  }
+}
+
+// 在组件载入时就获取统计信息
+fetchStatisticsOnLoad()
+
+// 监听主 Tab 切换，切换到统计 Tab 时更新图表
+watch(activeTab, (newTab) => {
+  if (newTab === 'statistics') {
+    // 如果数据已经存在，只更新图表显示
+    nextTick(() => {
+      if (dayData.value) {
+        updateDayChart()
+      }
+      if (monthData.value) {
+        updateMonthChart()
+      }
+      if (nameData.value) {
+        updateNameChart()
+      }
+      
+      // 触发图表重新渲染，确保尺寸正确
+      triggerChartsResize()
+    })
+  }
+})
+
+// 监听统计 Tab 内部切换，更新对应图表
+watch(activeStatisticsTab, (newTab) => {
+  if (newTab === 'day' && dayData.value) {
+    updateDayChart()
+    triggerChartsResize()
+  } else if (newTab === 'month' && monthData.value) {
+    updateMonthChart()
+    triggerChartsResize()
+  } else if (newTab === 'name' && nameData.value) {
+    updateNameChart()
+    triggerChartsResize()
+  }
+})
 
 </script>
 
@@ -254,14 +569,15 @@ searchTomato()
     </div>
 
     <div class="list-section">
-      <h3>Tomato History</h3>
-      <el-table 
-        :data="paginatedTomatoList" 
-        border 
-        style="width: 100%;"
-        stripe
-        class="tomato-table"
-      >
+      <el-tabs v-model="activeTab">
+        <el-tab-pane label="Tomato History" name="history">
+          <el-table
+            :data="paginatedTomatoList"
+            border
+            style="width: 100%;"
+            stripe
+            class="tomato-table"
+          >
         <el-table-column prop="id" label="ID" width="60" />
         <el-table-column prop="name" label="Task Topic" />
         <el-table-column prop="starttime" label="Start Time" width="200">
@@ -286,15 +602,35 @@ searchTomato()
       </el-table>
       
       <div class="pagination-container">
-        <el-pagination 
+        <el-pagination
           :current-page="currentPage"
-          :page-size="pageSize" 
-          :total="tomato_list.length" 
+          :page-size="pageSize"
+          :total="tomato_list.length"
           @current-change="handlePageChange"
-          layout="prev, pager, next, jumper, total" 
-          background 
+          layout="prev, pager, next, jumper, total"
+          background
         />
       </div>
+        </el-tab-pane>
+        
+        <el-tab-pane label="Tomato Statistics" name="statistics">
+          <div class="statistics-container">
+            <el-tabs v-model="activeStatisticsTab">
+              <el-tab-pane label="Day" name="day">
+                <div class="chart-container" ref="dayChart"></div>
+              </el-tab-pane>
+              
+              <el-tab-pane label="Month" name="month">
+                <div class="chart-container" ref="monthChart"></div>
+              </el-tab-pane>
+              
+              <el-tab-pane label="Total" name="name">
+                <div class="chart-container" ref="nameChart"></div>
+              </el-tab-pane>
+            </el-tabs>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
     </div>
   </div>
 </template>
@@ -499,6 +835,28 @@ searchTomato()
   
   .action-buttons {
     width: 100%;
+  }
+}
+
+.statistics-container {
+  width: 100%;
+  min-width: 0; /* 确保flex容器中的子元素可以收缩 */
+}
+
+.chart-container {
+  width: 100%;
+  height: 400px;
+  min-width: 0; /* 确保flex容器中的子元素可以收缩 */
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .statistics-container {
+    padding: 15px;
+  }
+  
+  .chart-container {
+    height: 300px;
   }
 }
 </style>

@@ -30,4 +30,21 @@ function update_tomato(tomato_id, data) {
     })
 }
 
-export { get_tomatoes, create_tomato, delete_tomato, update_tomato }
+function stat_name() {
+    return http_instance({
+        url: "tomato/stat_name/",
+    })
+}
+function stat_day() {
+    return http_instance({
+        url: "tomato/stat_day/",
+    })
+}
+
+function stat_month() {
+    return http_instance({
+        url: "tomato/stat_month/",
+    })
+}
+
+export { get_tomatoes, create_tomato, delete_tomato, update_tomato, stat_name, stat_day, stat_month }
