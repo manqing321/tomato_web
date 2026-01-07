@@ -1,6 +1,6 @@
 <template>
   <footer class="footer">
-    <p>蜀ICP备2025156541号</p>
+    <p><a href="https://beian.miit.gov.cn/">蜀ICP备2025156541号</a></p>
   </footer>
 </template>
 
