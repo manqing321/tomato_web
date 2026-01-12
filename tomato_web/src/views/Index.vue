@@ -4,6 +4,7 @@ import { get_tomatoes, create_tomato, delete_tomato, update_tomato, stat_day, st
 import * as echarts from 'echarts'
 import TomatoIcon from '@/assets/Tomato.svg'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { WarningFilled, CircleCheckFilled } from '@element-plus/icons-vue'
 
 // 统计相关的响应式变量
 const activeStatisticsTab = ref('day')
@@ -67,12 +68,16 @@ const addTomato = () => {
 }
  
   const dialog = ref(false)
+  const deleteDialog = ref(false)
+  const deleteTomatoId = ref(null)
+  const successDialog = ref(false)
+  const successMessage = ref('')
  
-  const edit_form_data = reactive({
-    tomato: {},
-    topic: "",
-    start_time: ""
-  })
+   const edit_form_data = reactive({
+     tomato: {},
+     topic: "",
+     start_time: ""
+   })
   const submitEdit = () => {
     const starttime = new Date()
     
@@ -115,10 +120,34 @@ const addTomato = () => {
 
   const startEdit = (tomato) => {
     edit_form_data.tomato = tomato
-    edit_form_data.topic = tomato.name    
+    edit_form_data.topic = tomato.name
     const timePart = tomato.starttime.split('T')[1]
     edit_form_data.start_time = timePart
     dialog.value = true
+  }
+
+  const confirmDelete = (id) => {
+    deleteTomatoId.value = id
+    deleteDialog.value = true
+  }
+
+  const executeDelete = () => {
+    if (deleteTomatoId.value) {
+      delete_tomato({"tomato_id": deleteTomatoId.value}).then(res => {
+        if (res.data.ok) {
+          if (deleteTomatoId.value == current_tomato_id.value) {
+            timeinfo.value = ``
+          }
+          searchTomato();
+          successMessage.value = 'Deleted successfully';
+          successDialog.value = true;
+        } else {
+          console.log(res);
+        }
+      });
+      deleteDialog.value = false
+      deleteTomatoId.value = null
+    }
   }
 
 const searchTomato = () => {
@@ -129,16 +158,17 @@ const searchTomato = () => {
   })
 }
 
-const confirmDelete = (id) => {
-  ElMessageBox.confirm(
-    'Are you sure you want to delete this tomato?',
-    'Delete tomato!',
-    {
-      confirmButtonText: 'Delete',
-      cancelButtonText: 'Cancel',
-      type: 'warning',
-    }
-  ).then(() => {
+const showDeleteConfirm = (id) => {
+  ElMessageBox({
+    title: 'Delete tomato!',
+    message: 'Are you sure you want to delete this tomato?',
+    showCancelButton: true,
+    confirmButtonText: 'Delete',
+    cancelButtonText: 'Cancel',
+    customClass: 'delete-confirm-dialog',
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
+  }).then(() => {
     delete_tomato({"tomato_id": id}).then(res => {
       if (res.data.ok) {
         if (id == current_tomato_id.value) {
@@ -152,7 +182,7 @@ const confirmDelete = (id) => {
       } else {
         console.log(res);
       }
-    });    
+    });
   }).catch(e => {
     console.log('Canceled');
   });
@@ -532,6 +562,69 @@ watch(activeStatisticsTab, (newTab) => {
       </div>
     </template>
   </el-dialog>
+
+  <!-- 删除确认弹窗 -->
+  <el-dialog
+    title="Delete tomato!"
+    v-model="deleteDialog"
+    draggable
+    width="450px"
+    class="delete-confirm-dialog"
+    :close-on-click-modal="false"
+  >
+    <div class="dialog-content">
+      <div class="delete-message">
+        <el-icon class="warning-icon" color="#f56c6c"><WarningFilled /></el-icon>
+        <p>Are you sure you want to delete this tomato?</p>
+      </div>
+    </div>
+    
+    <template #footer>
+      <div class="dialog-footer">
+        <div class="action-buttons">
+          <el-button @click="deleteDialog = false">
+            Cancel
+          </el-button>
+          <el-button
+            type="danger"
+            @click="executeDelete"
+          >
+            Delete
+          </el-button>
+        </div>
+      </div>
+    </template>
+  </el-dialog>
+
+  <!-- 成功消息弹窗 -->
+  <el-dialog
+    title="Success"
+    v-model="successDialog"
+    draggable
+    width="400px"
+    class="success-dialog"
+    :close-on-click-modal="false"
+  >
+    <div class="dialog-content">
+      <div class="success-message">
+        <el-icon class="check-icon" color="#67c23a"><CircleCheckFilled /></el-icon>
+        <text style="margin-left: 30px;">{{ successMessage }}</text>
+      </div>
+    </div>
+    
+    <template #footer>
+      <div class="dialog-footer">
+        <div class="action-buttons">
+          <el-button
+            type="primary"
+            @click="successDialog = false"
+          >
+            OK
+          </el-button>
+        </div>
+      </div>
+    </template>
+  </el-dialog>
   
   <div class="container">
     <div class="header">
@@ -819,6 +912,78 @@ watch(activeStatisticsTab, (newTab) => {
 .action-buttons {
   display: flex;
   gap: 12px;
+}
+
+/* 删除确认弹窗样式 */
+.delete-confirm-dialog {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.delete-confirm-dialog :deep(.el-dialog__header) {
+  background-color: #f5f7fa;
+  padding: 15px 20px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.delete-confirm-dialog :deep(.el-dialog__title) {
+  font-weight: 600;
+  color: #303133;
+}
+
+.delete-confirm-dialog :deep(.el-dialog__body) {
+  padding: 25px 30px;
+}
+
+.delete-confirm-dialog :deep(.el-dialog__footer) {
+  padding: 15px 30px 20px;
+  background-color: #f5f7fa;
+  border-top: 1px solid #ebeef5;
+}
+
+.dialog-content {
+  padding: 10px 0;
+}
+
+.delete-message {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #606266;
+  font-size: 14px;
+}
+
+.warning-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.delete-message p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.delete-confirm-dialog :deep(.el-button--danger) {
+  background-color: #f56c6c;
+  border-color: #f56c6c;
+}
+
+.delete-confirm-dialog :deep(.el-button--default) {
+  background-color: #fff;
+  border-color: #dcdfe6;
+  color: #606266;
 }
 
 /* 响应式设计 */
